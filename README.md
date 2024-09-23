@@ -6,7 +6,9 @@ A utility for creating easy Houdini package installers.
 HPackage uses PySide2 to create a simple, customizable interface to help users install Houdini package files without getting bogged down in JSON syntax or confusing file locations. 
 
 ## Usage
-To keep executable sizes as small as possible, it's **highly** recommended that you run `hpackage` in a virtual environment and only include the Python libraries you absolutely need (as defined by `requirements.txt`).
+**Note:** To keep executable sizes as small as possible, it's *highly* recommended that you run `hpackage` in a virtual environment and only include the Python libraries you absolutely need (as defined by `requirements.txt`).
+
+`HPackage` will automatically create a named JSON package file that adds your package's root directory to `HOUDINI_PATH` and copy it to any user-selected Houdini configuration. If a `[packagename].JSON` file already exists in the package's root directory, `HPackage` will use that package as a template instead and modify path-related variables as specified in `settings.py`.  
 
 HPackage is intended to be used in one of two ways:
 
