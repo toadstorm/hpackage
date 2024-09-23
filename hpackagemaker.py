@@ -23,7 +23,7 @@ for (dest, source, kind) in a.binaries:
 """
 
 
-def do_package(name=pkgname, path=settings.LOCATION, embedpayload=True, onefile=True):
+def do_package(name=pkgname, path=settings.OUTPUT, embedpayload=True, onefile=True):
     options = ['hpackage_ui.py', '--windowed', '-y', '--name', name]
     if platform.system() == "Windows":
         sep = ';'
