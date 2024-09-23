@@ -4,7 +4,8 @@ NAME = "MOPs"
 
 # any vars in this list will be set as env vars with the value being the package root path.
 # if this list is empty, the package path will be set for the "hpath" key.
-PATH_VARS = ["MOPS", "MOPSPLUS"]
+# example: PATH_VARS = ["MOPS", "MOPSPLUS"]
+PATH_VARS = []
 
 # any other vars to set via the installer.
 # this is a dictionary, i.e. OTHER_VARS = {"HOUDINI_PYTHONWARNINGS: "ignore", "load_package_once": true}
@@ -17,7 +18,11 @@ SUPPORTED_VERSIONS = []
 
 # if you want to embed the plugin files into your executable, provide the path here.
 # example: PAYLOAD = "D:/Projects/MOPS"
-PAYLOAD = "D:/Projects/VFX/MOPS/build"
+PAYLOAD = ""
+
+# if you want to build to a different location than the location of this file, provide a path here.
+# example: OUTPUT = "D:/Projects/MOPS/hpackage"
+OUTPUT = ""
 
 # window title
 TITLE = "MOPs Package Installer"

@@ -7,7 +7,6 @@ import shutil
 import logging
 
 #TODO: safeguard against installing to existing houdini config or install directories
-#TODO: if creating pkg from scratch, need to include any env key in "hpath" key
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s -- %(levelname)s: %(message)s', level=logging.DEBUG, filename=os.path.join(os.path.expanduser("~"), "hpackage.log"), filemode="w", datefmt="%Y/%m/%d %H:%M:%S")

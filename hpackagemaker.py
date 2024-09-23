@@ -5,9 +5,8 @@ import settings
 import platform
 import subprocess
 
-#TODO: only include data directory if compiling into single self-installing exe.
-#TODO: find a way to generate and patch spec file with DLL exclusion list prior to building
-#TODO: exclusion list doesn't seem to do anything at all with onefile enabled?
+# TODO: find a way to generate and patch spec file with DLL exclusion list prior to building
+# TODO: exclusion list doesn't seem to do anything at all with onefile enabled?
 
 pkgname = "{}_install".format(settings.NAME)
 
@@ -23,7 +22,8 @@ for (dest, source, kind) in a.binaries:
 # END HPACKAGE OPTIMIZATION
 """
 
-def do_package(name=pkgname, path=None, embedpayload=True, onefile=True):
+
+def do_package(name=pkgname, path=None, buildpath=None, embedpayload=True, onefile=True):
     options = ['hpackage_ui.py', '--windowed', '-y', '--name', name]
     if platform.system() == "Windows":
         sep = ';'
@@ -32,6 +32,8 @@ def do_package(name=pkgname, path=None, embedpayload=True, onefile=True):
     if embedpayload:
         if settings.PAYLOAD:
             options.extend(['--add-data', '{}{}payload'.format(settings.PAYLOAD, sep)])
+    if settings.LOCATION:
+        options.extend(['--distpath', settings.LOCATION])
     # embed the splash image
     options.extend(['--add-data', '{}{}.'.format(settings.IMAGE, sep)])
     if path:
@@ -42,6 +44,7 @@ def do_package(name=pkgname, path=None, embedpayload=True, onefile=True):
 
     PI.run(options)
 
+
 if __name__ == "__main__":
-    # do_package(*sys.argv[1:])
-    subprocess.run(["pyinstaller", "MOPs_install.spec"], env=os.environ)
+    do_package(*sys.argv[1:])
+    # subprocess.run(["pyinstaller", "MOPs_install.spec"], env=os.environ)
