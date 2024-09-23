@@ -6,6 +6,8 @@ A utility for creating easy Houdini package installers.
 HPackage uses PySide2 to create a simple, customizable interface to help users install Houdini package files without getting bogged down in JSON syntax or confusing file locations. 
 
 ## Usage
+To keep executable sizes as small as possible, it's **highly** recommended that you run `hpackage` in a virtual environment and only include the Python libraries you absolutely need (as defined by `requirements.txt`).
+
 HPackage is intended to be used in one of two ways:
 
 ### Option 1: Single self-contained executable
