@@ -114,7 +114,7 @@ class HPackageUI(QtWidgets.QMainWindow):
         result_image_layout.addStretch()
         result_layout.addLayout(result_image_layout)
         result_label_layout = QtWidgets.QVBoxLayout()
-        result_label = QtWidgets.QLabel("The package has been successfully installed.")
+        result_label = QtWidgets.QLabel(settings.SUCCESS)
         log_label = QtWidgets.QLabel("Installation log saved to: {}".format(os.path.join(os.path.expanduser("~"), "hpackage.log")))
         result_label.setMaximumWidth(settings.LABELWIDTH)
         result_label.setWordWrap(True)

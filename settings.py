@@ -2,6 +2,14 @@
 # this should exist in the same path or in a parent path of the payload.
 NAME = "MOPs"
 
+# if you want to embed the plugin files into your executable, provide the path here.
+# example: PAYLOAD = "D:/Projects/MOPS"
+PAYLOAD = ""
+
+# if you want to build to a different location than the location of this file, provide a path here.
+# example: OUTPUT = "D:/Projects/MOPS/hpackage"
+OUTPUT = ""
+
 # any vars in this list will be set as env vars with the value being the package root path.
 # if this list is empty, the package path will be set for the "hpath" key.
 # example: PATH_VARS = ["MOPS", "MOPSPLUS"]
@@ -15,14 +23,6 @@ OTHER_VARS = {}
 # if it's empty, all found versions of houdini will be available for the package install UI.
 # example: SUPPORTED_VERSIONS = ["20.5", "20.0", "19.5"]
 SUPPORTED_VERSIONS = []
-
-# if you want to embed the plugin files into your executable, provide the path here.
-# example: PAYLOAD = "D:/Projects/MOPS"
-PAYLOAD = ""
-
-# if you want to build to a different location than the location of this file, provide a path here.
-# example: OUTPUT = "D:/Projects/MOPS/hpackage"
-OUTPUT = ""
 
 # window title
 TITLE = "MOPs Package Installer"
@@ -39,6 +39,9 @@ CHOOSER = """Please select a list of compatible Houdini versions to install MOPs
 # location text
 LOCATION = "Please select the location where you want MOPs extracted to. Do not install MOPs directly into a Houdini " \
            "installation or configuration directory!"
+
+# success text
+SUCCESS = "MOPs has been successfully installed!"
 
 # if True, the package won't actually copy any files or create/modify any packages
 DEBUG = True
