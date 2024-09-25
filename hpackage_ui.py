@@ -2,7 +2,7 @@ import os
 import sys
 import hpackagelib
 import settings
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
 import logging
 import traceback
 
@@ -144,6 +144,8 @@ class HPackageUI(QtWidgets.QMainWindow):
 
         status = QtWidgets.QStatusBar()
         status.showMessage("HPackage developed by Henry Foster, www.toadstorm.com")
+        if settings.DEBUG:
+            status.showMessage("DEBUG MODE ENABLED. No files will be written to disk!")
         self.setMinimumWidth(500)
         self.setStatusBar(status)
 
@@ -328,4 +330,4 @@ class HPackageUI(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     ui = HPackageUI()
-    app.exec_()
+    app.exec()
