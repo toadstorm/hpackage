@@ -209,14 +209,16 @@ def install_package(path_list, package=None, destination=None, payload=None, deb
         # copy the contents of the package to this destination.
         if payload is None:
             payload = find_payload_path()
-
-        if not os.path.samefile(payload, destination):
+        payload_is_destination = False
+        if os.path.exists(destination):
+            if os.path.samefile(payload, destination):
+                logging.info("Using existing payload location as package install path: {}".format(payload))
+                payload_is_destination = True
+        if not payload_is_destination:
             logging.info("Copying payload at {} to install path: {}".format(payload, destination))
             if not debug:
-
                 shutil.copytree(payload, install_path, dirs_exist_ok=True)
-        else:
-            logging.info("Using existing payload location as package install path: {}".format(payload))
+
     else:
         if package:
             if os.path.exists(package):
