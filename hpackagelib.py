@@ -5,6 +5,7 @@ import re
 import settings
 import shutil
 import logging
+from pathlib import Path
 
 #TODO: safeguard against installing to existing houdini config or install directories
 
@@ -158,6 +159,25 @@ def find_package_path():
     return None
 
 
+def is_valid_install_path(testpath):
+    """
+    If this is a Houdini installation path or a Houdini configuration path, we don't want to install there.
+    """
+    config_paths = get_houdini_prefs_paths()
+    # check detected configuration paths.
+    for test in config_paths:
+        root = Path(test)
+        this = Path(testpath)
+        if root in this.parents or root == this:
+            logging.warning("Path {} appears to be within a Houdini preferences path!".format(testpath))
+            return False
+    # check if this is maybe a Houdini installation.
+    if 'Side Effects Software' in testpath.split("/"):
+        logging.warning("Path {} appears to be in a Houdini installation directory!".format(testpath))
+        return False
+
+    return True
+
 def get_resource(relative_path):
     """
     Get the relative path of a resource. This path can change if PyInstaller is used to create a single file.
@@ -190,9 +210,13 @@ def install_package(path_list, package=None, destination=None, payload=None, deb
         if payload is None:
             payload = find_payload_path()
 
-        logging.info("Copying payload at {} to install path: {}".format(payload, destination))
-        if not debug:
-            shutil.copytree(payload, install_path, dirs_exist_ok=True)
+        if not os.path.samefile(payload, destination):
+            logging.info("Copying payload at {} to install path: {}".format(payload, destination))
+            if not debug:
+
+                shutil.copytree(payload, install_path, dirs_exist_ok=True)
+        else:
+            logging.info("Using existing payload location as package install path: {}".format(payload))
     else:
         if package:
             if os.path.exists(package):
@@ -207,6 +231,8 @@ def install_package(path_list, package=None, destination=None, payload=None, deb
         with open(package, 'r') as f:
             data = json.load(f)
     except:
+        # create default name for package file
+
         data = dict()
         env = []
         data["env"] = env
@@ -248,11 +274,13 @@ def install_package(path_list, package=None, destination=None, payload=None, deb
     for path in path_list:
         # create the package directory and get ready to write the modified JSON file
         # print(path)
-        packages_path = os.path.join(path, "packages")
+        packages_path = os.path.join(path, "packages").replace("\\", "/")
         if not os.path.exists(packages_path):
             logging.info("Created Houdini packages directory: {}".format(packages_path))
             os.makedirs(packages_path)
-        out_path = os.path.join(packages_path, os.path.basename(package))
+        else:
+            logging.info("Writing package to existing Houdini packages directory: {}".format(packages_path))
+        out_path = os.path.join(packages_path, "{}.json".format(settings.NAME)).replace("\\", "/")
         # print(json.dumps(data, indent=3))
 
         if not debug:

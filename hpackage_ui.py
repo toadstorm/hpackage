@@ -4,22 +4,25 @@ import hpackagelib
 import settings
 from PySide2 import QtWidgets, QtGui, QtCore
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s -- %(levelname)s: %(message)s', level=logging.DEBUG, filename=os.path.join(os.path.expanduser("~"), "hpackage.log"), filemode="w", datefmt="%Y/%m/%d %H:%M:%S")
 
-# TODO: results dialog
 # TODO: if user doesn't want package files copied elsewhere, don't run shutil
-# TODO: error handling
 
 class HPackageUI(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(HPackageUI, self).__init__(parent)
         self.setWindowTitle(settings.TITLE)
 
+        logging.info("Initializing UI.")
+
         """ persistent widgets """
         prev_btn = QtWidgets.QPushButton("< Prev")
         next_btn = QtWidgets.QPushButton("Next >")
+        finish_btn = QtWidgets.QPushButton("Finish")
+        finish_btn.setVisible(False)
         prev_btn.setEnabled(False)
 
         """ intro dialog """
@@ -30,7 +33,10 @@ class HPackageUI(QtWidgets.QMainWindow):
         intro_map = QtGui.QPixmap(intro_image)
         intro_label_image = QtWidgets.QLabel()
         intro_label_image.setPixmap(intro_map)
-        intro_layout.addWidget(intro_label_image)
+        intro_image_layout = QtWidgets.QVBoxLayout()
+        intro_image_layout.addWidget(intro_label_image)
+        intro_image_layout.addStretch()
+        intro_layout.addLayout(intro_image_layout)
         intro_text_layout = QtWidgets.QVBoxLayout()
         intro_text = QtWidgets.QLabel(settings.INTRO)
         intro_text.setMaximumWidth(settings.LABELWIDTH)
@@ -38,6 +44,7 @@ class HPackageUI(QtWidgets.QMainWindow):
         intro_text_layout.addWidget(intro_text)
         intro_text_layout.addStretch()
         intro_layout.addLayout(intro_text_layout)
+        intro_layout.addStretch()
 
         """ configs dialog """
         configs_dialog = QtWidgets.QFrame()
@@ -67,6 +74,8 @@ class HPackageUI(QtWidgets.QMainWindow):
             default_path = os.path.join(os.path.expanduser("~"), settings.NAME)
         except Exception:
             default_path = hpackagelib.find_payload_path()
+            if not default_path:
+                default_path = os.path.join(os.path.expanduser("~"), settings.NAME)
 
         dest_chooser.setText(default_path)
         dest_btn = QtWidgets.QPushButton("...")
@@ -81,6 +90,8 @@ class HPackageUI(QtWidgets.QMainWindow):
         ok_layout = QtWidgets.QVBoxLayout()
         ok_dialog.setLayout(ok_layout)
         confs_label = QtWidgets.QLabel("The package will be installed for the following Houdini configurations:")
+        confs_label.setMaximumWidth((settings.LABELWIDTH))
+        confs_label.setWordWrap(True)
         confs_list = QtWidgets.QListWidget()
         confs_list.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         ok_layout.addWidget(confs_label)
@@ -89,10 +100,29 @@ class HPackageUI(QtWidgets.QMainWindow):
         dest_path_label = QtWidgets.QLabel()
         ok_layout.addWidget(dest_label)
         ok_layout.addWidget(dest_path_label)
+        conf_label = QtWidgets.QLabel("\nPress Next to complete the installation.")
+        ok_layout.addStretch()
+        ok_layout.addWidget(conf_label)
 
         """ result dialog """
         result_dialog = QtWidgets.QFrame()
-        result_layout = QtWidgets.QVBoxLayout()
+        result_layout = QtWidgets.QHBoxLayout()
+        result_image = QtWidgets.QLabel()
+        result_image.setPixmap(intro_map)
+        result_image_layout = QtWidgets.QVBoxLayout()
+        result_image_layout.addWidget(result_image)
+        result_image_layout.addStretch()
+        result_layout.addLayout(result_image_layout)
+        result_label_layout = QtWidgets.QVBoxLayout()
+        result_label = QtWidgets.QLabel("The package has been successfully installed.")
+        log_label = QtWidgets.QLabel("Installation log saved to: {}".format(os.path.join(os.path.expanduser("~"), "hpackage.log")))
+        result_label.setMaximumWidth(settings.LABELWIDTH)
+        result_label.setWordWrap(True)
+        result_label_layout.addWidget(result_label)
+        result_label_layout.addWidget(log_label)
+        result_label_layout.addStretch()
+        result_layout.addLayout(result_label_layout)
+        result_layout.addStretch()
         result_dialog.setLayout(result_layout)
 
         """ persistent layouts """
@@ -103,6 +133,7 @@ class HPackageUI(QtWidgets.QMainWindow):
         btns_layout.addStretch()
         btns_layout.addWidget(prev_btn)
         btns_layout.addWidget(next_btn)
+        btns_layout.addWidget(finish_btn)
 
         main_layout.addWidget(intro_dialog)
         main_layout.addWidget(configs_dialog)
@@ -111,18 +142,25 @@ class HPackageUI(QtWidgets.QMainWindow):
         main_layout.addWidget(result_dialog)
         main_layout.addLayout(btns_layout)
 
+        status = QtWidgets.QStatusBar()
+        status.showMessage("HPackage developed by Henry Foster, www.toadstorm.com")
+        self.setMinimumWidth(500)
+        self.setStatusBar(status)
+
         self.setCentralWidget(main_dialog)
 
-        dialogs = [intro_dialog, configs_dialog, dest_dialog, ok_dialog, result_dialog]
+        dialogs = [intro_dialog, configs_dialog, dest_dialog, ok_dialog, ok_dialog, result_dialog]
 
         # persistent data
         self.data = {
             "state": 0,
+            "aborted": False,
             "dialogs": dialogs,
             "default_path": default_path,
             "controls": {
                 "prev": prev_btn,
                 "next": next_btn,
+                "finish": finish_btn,
                 "configs": configs_list,
                 "destination": dest_chooser,
                 "confirmation": confs_list,
@@ -134,6 +172,7 @@ class HPackageUI(QtWidgets.QMainWindow):
         next_btn.clicked.connect(self.next_state)
         prev_btn.clicked.connect(self.prev_state)
         dest_btn.clicked.connect(self.pick_install_path)
+        finish_btn.clicked.connect(self.success)
 
         self.refresh()
 
@@ -156,6 +195,7 @@ class HPackageUI(QtWidgets.QMainWindow):
             i.setVisible(False)
         # show dialog matching current state
         self.data["dialogs"][self.data["state"]].setVisible(True)
+
         # enable/disable buttons
         if self.data["state"] == 0:
             self.data["controls"]["prev"].setEnabled(False)
@@ -167,8 +207,14 @@ class HPackageUI(QtWidgets.QMainWindow):
             self.load_confs_list()
             self.data["controls"]["confirmation_dest"].setText(self.data["controls"]["destination"].text())
         if self.data["state"] == 4:
-            # this should actually run the installation.
+            self.data["controls"]["prev"].setEnabled(False)
+            self.data["controls"]["next"].setEnabled(False)
             self.do_install()
+        if self.data["state"] == 5:
+            self.data["controls"]["next"].setVisible(False)
+            self.data["controls"]["prev"].setEnabled(False)
+            self.data["controls"]["finish"].setVisible(True)
+        self.adjustSize()
 
     def get_configs(self):
         # get all houdini config dirs.
@@ -185,9 +231,18 @@ class HPackageUI(QtWidgets.QMainWindow):
     def pick_install_path(self):
         # get the path to install to from the user.
         default_path = self.data["controls"]["destination"].text()
-        new_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Choose installation path...", default_path)
-        if new_path:
-            self.data["controls"]["destination"].setText(new_path)
+        valid_path = False
+        while not valid_path:
+            new_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Choose installation path...", default_path)
+            # validate this path
+            if new_path:
+                if hpackagelib.is_valid_install_path(new_path.replace("\\", "/")):
+                    valid_path = True
+                    self.data["controls"]["destination"].setText(new_path)
+                    logging.info("User selected installation path: {}".format(new_path))
+                    break
+                QtWidgets.QMessageBox.warning(self, "Invalid installation path!", "The installation path you specified is invalid. You may not install to existing Houdini preferences directories or to Houdini installation directories.", QtWidgets.QMessageBox.Ok)
+
 
     def get_selected_configs(self):
         # get all selected houdini configurations.
@@ -217,17 +272,32 @@ class HPackageUI(QtWidgets.QMainWindow):
             if path:
                 logging.info("User supplied payload directory: {}".format(path))
                 if os.path.exists(path):
+                    # test to make sure this is a package root
+                    if not os.path.exists(os.path.join(path, "otls")):
+                        logging.error("User supplied path does not have an otls directory.")
+                        QtWidgets.QMessageBox.warning(self, "Package base directory has no otls directory!", "The package base directory you specified does not have an /otls/ subdirectory. Please verify the path and try again.", QtWidgets.QMessageBox.Ok)
+                        return None
                     return path
                 else:
-                    logging.error("User supplied path is invalid. Aborting.")
-                    self.fail()
+                    logging.error("User supplied path is invalid.")
+                    QtWidgets.QMessageBox.warning(self, "Package base directory does not exist!",
+                                                  "The package base directory you specified does not exist. Please verify the path and try again.",
+                                                  QtWidgets.QMessageBox.Ok)
+                    return None
+
         else:
             logging.info("User aborted installation.")
+            self.data["aborted"] = True
             return None
 
     def fail(self):
         # appears when installation has failed for whatever reason.
         ret = QtWidgets.QMessageBox.critical(self, "Installation failed!", "Installation failed. Please see the log at {} for details.".format(os.path.join(os.path.expanduser("~"), "hpackage.log")))
+        app.quit()
+
+    def success(self):
+        # appears when normal installation is completed.
+        # ret = QtWidgets.QMessageBox.information(self, "Installation complete", "Installation complete. See installation log at {} for details.".format(os.path.join(os.path.expanduser("~"), "hpackage.log")))
         app.quit()
 
     def do_install(self):
@@ -240,13 +310,20 @@ class HPackageUI(QtWidgets.QMainWindow):
         # if we can't find the payload, we need to prompt the user.
         if not payload:
             logging.warning("Payload path not found. Prompting user for path.")
-            payload = self.get_user_payload_path()
+            while self.data["aborted"] is False and payload is None:
+                payload = self.get_user_payload_path()
         if not payload:
             # fail the installation.
             logging.error("Installation failed!")
-            self.data["state"] = -1
             self.fail()
-        hpackagelib.install_package(configs, package=package, destination=destination, payload=payload, debug=settings.DEBUG)
+        try:
+            hpackagelib.install_package(configs, package=package, destination=destination, payload=payload, debug=settings.DEBUG)
+        except Exception:
+            logging.error("Unexpected error during installation!")
+            logging.error(traceback.format_exc())
+            self.fail()
+        self.next_state()
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
