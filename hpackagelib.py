@@ -121,7 +121,9 @@ def find_payload_path():
     """
     try:
         payload_path = os.path.join(sys._MEIPASS, 'payload')
-        return payload_path
+        if os.path.exists(payload_path):
+            return payload_path
+        raise FileNotFoundError
     except Exception:
         pass
     this_path = os.path.abspath(".")

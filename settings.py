@@ -44,7 +44,7 @@ LOCATION = "Please select the location where you want MOPs extracted to. Do not 
 SUCCESS = "MOPs has been successfully installed!"
 
 # if True, the package won't actually copy any files or create/modify any packages
-DEBUG = True
+DEBUG = False
 
 # these are currently nonfunctional
 CUSTOM_EXCLUDE_LIST = []
